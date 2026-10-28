@@ -1,0 +1,22 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: acid-ledger-mongo
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all", "--port", "27018"]
+    ports:
+      - "27018:27018"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mongosh --quiet --host 127.0.0.1:27018 --eval \"try { rs.status().ok } catch (e) { rs.initiate({_id:'rs0',members:[{_id:0,host:'127.0.0.1:27018'}]}).ok }\" && mongosh --quiet --host 127.0.0.1:27018 --eval \"db.hello().isWritablePrimary\" | grep -q true",
+        ]
+      interval: 5s
+      timeout: 10s
+      retries: 20
+      start_period: 5s
+
+volumes:
+  mongo-data:
